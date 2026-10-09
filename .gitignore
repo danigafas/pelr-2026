@@ -27,4 +27,4 @@ build/
 dist/
 
 # Netbeans private files
-PELR/nbproject/private/
+legacy/pelr-2007/PELR/nbproject/private/
