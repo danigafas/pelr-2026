@@ -1,0 +1,41 @@
+Estados: 
+
+[INICIAL] %
+[INTERMEDIO] 0
+[INTERMEDIO] 1
+[FINAL] 00
+[FINAL] 11
+[INTERMEDIO] 01
+[INTERMEDIO] 10
+[INTERMEDIO] 010
+[INTERMEDIO] 011
+[INTERMEDIO] 000
+[INTERMEDIO] 101
+[FINAL] 0110
+[FINAL] 0101
+[FINAL] 0000
+[FINAL] 1010
+
+Alfabeto: 
+
+0
+1
+
+Matriz de transiciones: 
+
+Estado 0 1 
+{%} {0} {1} 
+{0} {00} {01} 
+{1} {10} {11} 
+{00} {000} - 
+{11} - - 
+{01} {010} {011} 
+{10} - {101} 
+{010} - {0101} 
+{011} {0110} - 
+{000} {0000} - 
+{101} {1010} - 
+{0110} - - 
+{0101} - - 
+{0000} - - 
+{1010} - - 

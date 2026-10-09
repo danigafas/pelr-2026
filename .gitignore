@@ -20,3 +20,11 @@ dist/
 
 # OS
 .DS_Store
+
+# Java legacy biuld artifacts
+*.class
+build/
+dist/
+
+# Netbeans private files
+nbproject/private/
