@@ -27,4 +27,4 @@ build/
 dist/
 
 # Netbeans private files
-nbproject/private/
+PELR/nbproject/private/
