@@ -61,7 +61,7 @@ class State:
 
     def get_estado(self, indice: int) -> str:
         if indice < 0:
-            raise IndexError("Fuera de límites")
+            raise IndexError("El índice no puede ser negativo")
         return self.nombres[indice]
 
     def compara_estado(self, estado: State) -> bool:
