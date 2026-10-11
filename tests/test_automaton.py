@@ -318,3 +318,105 @@ def test_add_transicion_misma_instancia_almacenada():
     destino = automata.delta[0][0][0]
     automata.add_transicion(0, 0, destino)
     assert len(automata.delta[0][0]) == 1
+
+def test_add_transicion_estado_negativo():
+    automata = Automaton()
+    automata.add_transicion(0, 0, State("q1"))
+    with pytest.raises(IndexError):
+        automata.add_transicion(-1, 0, State("q2"))
+    assert len(automata.delta[0][0]) == 1
+
+def test_add_transicion_simbolo_negativo():
+    automata = Automaton()
+    automata.add_transicion(0, 0, State("q1"))
+    with pytest.raises(IndexError):
+        automata.add_transicion(0, -1, State("q2"))
+    assert len(automata.delta[0][0]) == 1
+
+def test_get_transicion():
+    automata = Automaton()
+    automata.add_transicion(0, 0, State("q1"))
+    automata.add_transicion(0, 0, State("q2"))
+    destinos = automata.get_transicion(0, 0)
+    assert len(destinos) == 2
+    assert destinos[0].nombres == ["q1"]
+    assert destinos[1].nombres == ["q2"]
+
+def test_get_transicion_referencia():
+    automata = Automaton()
+    automata.add_transicion(0, 0, State("q1"))
+    destinos = automata.get_transicion(0, 0)
+    assert destinos is automata.delta[0][0]
+
+def test_get_transicion_estado_negativo():
+    automata = Automaton()
+    automata.add_transicion(0, 0, State("q1"))
+    with pytest.raises(IndexError):
+        automata.get_transicion(-1, 0)
+
+def test_get_transicion_simbolo_negativo():
+    automata = Automaton()
+    automata.add_transicion(0, 0, State("q1"))
+    with pytest.raises(IndexError):
+        automata.get_transicion(0, -1)
+
+def test_get_vector_transicion():
+    automata = Automaton()
+    automata.add_transicion(0, 0, State("q1"))
+    automata.add_transicion(0, 1, State("q2"))
+    transiciones = automata.get_vector_transicion(0)
+    assert transiciones is automata.delta[0]
+    assert transiciones[0][0].nombres == ["q1"]
+    assert transiciones[1][0].nombres == ["q2"]
+
+def test_get_vector_transicion_sin_inicializar():
+    automata = Automaton()
+    automata.add_transicion(2, 0, State("q3"))
+    assert automata.get_vector_transicion(0) is None
+
+def test_get_vector_transicion_indice_negativo():
+    automata = Automaton()
+    automata.add_transicion(0, 0, State("q1"))
+    with pytest.raises(IndexError):
+        automata.get_vector_transicion(-1)
+
+def test_get_transicion_estrella_cadena_vacia():
+    automata = Automaton()
+    inicial = State("q0", "INICIAL")
+    automata.add_estado(inicial)
+    resultado = automata.get_transicion_estrella(0, "")
+    assert resultado.nombres == ["q0"]
+    assert resultado.tipo == "INICIAL"
+    assert resultado is not inicial
+
+def test_get_transicion_estrella_un_simbolo():
+    automata = Automaton()
+    automata.add_estado(State("q0"))
+    automata.add_estado(State("q1"))
+    automata.put_simbolos(["a"])
+    automata.add_transicion(0, 0, State("q1"))
+    resultado = automata.get_transicion_estrella(0, "a")
+    assert resultado.nombres == ["q1"]
+
+def test_get_transicion_estrella_dos_simbolos():
+    automata = Automaton()
+    automata.add_estado(State("q0"))
+    automata.add_estado(State("q1"))
+    automata.add_estado(State("q2"))
+    automata.put_simbolos(["a", "b"])
+    automata.add_transicion(0, 0, State("q1"))
+    automata.add_transicion(1, 1, State("q2"))
+    resultado = automata.get_transicion_estrella(0, "ab")
+    assert resultado.nombres == ["q2"]
+
+def test_get_transicion_estrella_afnd_primer_destino():
+    automata = Automaton()
+    for nombre in ["q0", "q1", "q2", "q3", "q4"]:
+        automata.add_estado(State(nombre))
+    automata.put_simbolos(["a", "b"])
+    automata.add_transicion(0, 0, State("q1"))
+    automata.add_transicion(0, 0, State("q2"))
+    automata.add_transicion(1, 1, State("q3"))
+    automata.add_transicion(2, 1, State("q4"))
+    resultado = automata.get_transicion_estrella(0, "ab")
+    assert resultado.nombres == ["q3"]

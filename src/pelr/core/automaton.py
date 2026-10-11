@@ -121,6 +121,8 @@ class Automaton:
         destino: State
     ) -> None:
 
+        if estado <0 or simbolo <0:
+            raise IndexError("No se permiten índices negativos")
         while len(self.delta) <= estado:
             self.delta.append(None)
 
@@ -135,3 +137,32 @@ class Automaton:
 
         if destino not in self.delta[estado][simbolo]:
             self.delta[estado][simbolo].append(State(destino))
+
+    def get_transicion(self, estado: int, simbolo: int) -> list[State]:
+        if estado < 0 or simbolo < 0:
+            raise IndexError("No se permiten índices negativos")
+        if self.delta[estado] is None:
+            raise IndexError("Ese estado no tiene transiciones")
+        if self.delta[estado][simbolo] is None:
+            raise IndexError("No hay transiciones para ese símbolo")
+        return self.delta[estado][simbolo]
+
+    def get_vector_transicion(self, estado: int) -> list | None:
+        if estado < 0:
+            raise IndexError("No se permiten índices negativos")
+        return self.delta[estado]
+
+    def get_transicion_estrella(
+        self,
+        estado: int,
+        cadena: str
+    ) -> State:
+        estado_actual = State(self.obtener_estado(estado))
+        for simbolo_actual in cadena:
+            indice_simbolo = self.simbolos.index(simbolo_actual)
+            indice_estado = self.buscar_estado(estado_actual)
+            destinos = self.get_transicion(indice_estado,indice_simbolo)
+            # Aquí estamos limitando la funcionalidad a automatas determinísticos.
+            # Sólo seleccionamos el primero de los posibles destinos
+            estado_actual = destinos[0]
+        return estado_actual
