@@ -420,3 +420,85 @@ def test_get_transicion_estrella_afnd_primer_destino():
     automata.add_transicion(2, 1, State("q4"))
     resultado = automata.get_transicion_estrella(0, "ab")
     assert resultado.nombres == ["q3"]
+
+def test_get_transicion_estrella_simbolo_desconocido():
+    automata = Automaton()
+    automata.add_estado(State("q0"))
+    automata.put_simbolos(["a"])
+    automata.add_transicion(0, 0, State("q0"))
+    with pytest.raises(
+        Exception,
+        match="No llega a ningún estado válido"
+    ):
+        automata.get_transicion_estrella(0, "b")
+
+def test_get_transicion_estrella_sin_continuacion():
+    automata = Automaton()
+    automata.add_estado(State("q0"))
+    automata.add_estado(State("q1"))
+    automata.put_simbolos(["a", "b"])
+    automata.add_transicion(0, 0, State("q1"))
+    with pytest.raises(
+        Exception,
+        match="No llega a ningún estado válido"
+    ):
+        automata.get_transicion_estrella(0, "ab")
+
+def test_get_tipo_automata_default():
+    automata = Automaton()
+    assert automata.get_tipo_automata() == ""
+
+def test_put_tipo_automata():
+    automata = Automaton()
+    automata.put_tipo_automata("AFD")
+    assert automata.get_tipo_automata() == "AFD"
+    automata.put_tipo_automata("AFND")
+    assert automata.get_tipo_automata() == "AFND"
+
+def test_une_estados_intermedio_final():
+    automata = Automaton()
+    primero = State("q0", "INTERMEDIO")
+    segundo = State("q1", "FINAL")
+    automata.add_estado(primero)
+    automata.add_estado(segundo)
+    automata.une_estados(0, 1)
+    assert automata.obtener_numero_estados() == 1
+    assert automata.obtener_estado(0).nombres == ["q0", "q1"]
+    assert automata.obtener_estado(0).tipo == "FINAL"
+    assert automata.obtener_estado(0) is primero
+
+def test_une_estados_inicial_final():
+    automata = Automaton()
+    automata.add_estado(State("q0", "INICIAL"))
+    automata.add_estado(State("q1", "FINAL"))
+    automata.une_estados(0, 1)
+    assert automata.obtener_numero_estados() == 1
+    assert automata.obtener_estado(0).nombres == ["q0", "q1"]
+    assert automata.obtener_estado(0).tipo == "INICIAL/FINAL"
+
+def test_une_estados_final_inicial():
+    automata = Automaton()
+    automata.add_estado(State("q0", "FINAL"))
+    automata.add_estado(State("q1", "INICIAL"))
+    automata.une_estados(0, 1)
+    assert automata.obtener_estado(0).tipo == "INICIAL/FINAL"
+
+def test_une_estados_grupos():
+    automata = Automaton()
+    primero = State(["q0", "q1"], "INTERMEDIO")
+    segundo = State(["q2", "q3"], "FINAL")
+    automata.add_estado(primero)
+    automata.add_estado(segundo)
+    automata.une_estados(0, 1)
+    assert automata.obtener_numero_estados() == 1
+    assert automata.obtener_estado(0) is primero
+    assert primero.nombres == ["q0", "q1", "q2", "q3"]
+    assert primero.tipo == "FINAL"
+
+def test_une_estados_mismo_indice():
+    automata = Automaton()
+    automata.add_estado(State("q0", "INICIAL"))
+    with pytest.raises(ValueError):
+        automata.une_estados(0, 0)
+    assert automata.obtener_numero_estados() == 1
+    assert automata.obtener_estado(0).nombres == ["q0"]

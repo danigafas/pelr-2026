@@ -159,10 +159,39 @@ class Automaton:
     ) -> State:
         estado_actual = State(self.obtener_estado(estado))
         for simbolo_actual in cadena:
-            indice_simbolo = self.simbolos.index(simbolo_actual)
-            indice_estado = self.buscar_estado(estado_actual)
-            destinos = self.get_transicion(indice_estado,indice_simbolo)
-            # Aquí estamos limitando la funcionalidad a automatas determinísticos.
-            # Sólo seleccionamos el primero de los posibles destinos
-            estado_actual = destinos[0]
+            try:
+                indice_simbolo = self.simbolos.index(simbolo_actual)
+                indice_estado = self.buscar_estado(estado_actual)
+                destinos = self.get_transicion(indice_estado,indice_simbolo)
+                # Aquí estamos limitando la funcionalidad de los automatas no determinísticos.
+                # Sólo seleccionamos el primero de los posibles destinos
+                estado_actual = destinos[0]
+            except Exception as error:
+                raise Exception(
+                    "No llega a ningún estado válido"
+                ) from error
         return estado_actual
+
+    def put_tipo_automata(self, tipo: str) -> None:
+        self.tipo = tipo
+
+    def get_tipo_automata(self) -> str | None:
+        return self.tipo
+
+    def une_estados(self, primero: int, segundo: int) -> None:
+        if primero == segundo:
+            raise ValueError("No se puede unir un estado consigo mismo")
+        primer_estado = self.obtener_estado(primero)
+        segundo_estado = self.obtener_estado(segundo)
+        for nombre in segundo_estado.nombres:
+            if primer_estado.tipo == "INTERMEDIO":
+                tipo_resultante = segundo_estado.tipo
+            elif segundo_estado.tipo == "INTERMEDIO":
+                tipo_resultante = primer_estado.tipo
+            elif ((primer_estado.tipo == "INICIAL" and segundo_estado.tipo == "FINAL")
+                or (primer_estado.tipo == "FINAL" and segundo_estado.tipo == "INICIAL")):
+                tipo_resultante = "INICIAL/FINAL"
+            else:
+                tipo_resultante = primer_estado.tipo
+            primer_estado.add_estado(nombre,tipo_resultante)
+        self.del_estado(segundo_estado)
