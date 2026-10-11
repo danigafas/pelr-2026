@@ -502,3 +502,229 @@ def test_une_estados_mismo_indice():
         automata.une_estados(0, 0)
     assert automata.obtener_numero_estados() == 1
     assert automata.obtener_estado(0).nombres == ["q0"]
+
+def test_get_alf_entrada():
+    automata = Automaton()
+    assert automata.get_alf_entrada() == []
+
+def test_get_alf_entrada_referencia():
+    automata = Automaton()
+    entrada = automata.get_alf_entrada()
+    entrada.append("aba")
+    assert automata.alfabeto_entrada == ["aba"]
+    assert entrada is automata.alfabeto_entrada
+
+def test_put_alf_entrada_copia():
+    automata = Automaton()
+    muestra = ["ab", "aba"]
+    automata.put_alf_entrada(muestra)
+    muestra.append("bbb")
+    assert automata.get_alf_entrada() == ["ab", "aba"]
+
+def test_get_alf_salida():
+    automata = Automaton()
+    assert automata.get_alf_salida() == []
+
+def test_get_alf_salida_referencia():
+    automata = Automaton()
+    salida = automata.get_alf_salida()
+    salida.append("x")
+    assert automata.alfabeto_salida == ["x"]
+    assert salida is automata.alfabeto_salida
+
+def test_get_f_salida():
+    automata = Automaton()
+    assert automata.get_f_salida() == []
+
+def test_put_f_salida_copia():
+    automata = Automaton()
+    funcion = ["x", "y"]
+    automata.put_f_salida(funcion)
+    funcion.append("z")
+    assert automata.get_f_salida() == ["x", "y"]
+
+def test_put_alf_salida():
+    automata = Automaton()
+    automata.put_alf_salida(["x", "y"])
+    assert automata.get_alf_salida() == ["x", "y"]
+
+def test_put_alf_salida_copia():
+    automata = Automaton()
+    alfabeto = ["x", "y"]
+    automata.put_alf_salida(alfabeto)
+    alfabeto.append("z")
+    assert automata.get_alf_salida() == ["x", "y"]
+
+def test_add_estado_transicion_duplicado():
+    automata = Automaton()
+    automata.add_estado(State("%", "INICIAL"))
+    automata.add_estado(State("a", "FINAL"))
+    resultado = automata.add_estado_transicion(
+        State("a", "FINAL")
+    )
+    assert resultado is False
+    assert automata.obtener_numero_estados() == 2
+    assert automata.delta == []
+
+def test_add_estado_transicion_simple():
+    automata = Automaton()
+    automata.add_estado(State("%", "INICIAL"))
+    resultado = automata.add_estado_transicion(
+        State("a", "FINAL")
+    )
+    assert resultado is True
+    assert automata.obtener_numero_estados() == 2
+    assert automata.simbolos == ["a"]
+    destinos = automata.get_transicion(0, 0)
+    assert len(destinos) == 1
+    assert destinos[0].nombres == ["a"]
+
+def test_add_estado_transicion_prefijo_existente():
+    automata = Automaton()
+    automata.add_estado(State("%", "INICIAL"))
+    automata.add_estado_transicion(
+        State("a", "INTERMEDIO")
+    )
+    automata.add_estado_transicion(
+        State("ab", "FINAL")
+    )
+    assert automata.obtener_numero_estados() == 3
+    assert automata.simbolos == ["a", "b"]
+    # La transición existente se conserva
+    destinos_a = automata.get_transicion(0, 0)
+    assert destinos_a[0].nombres == ["a"]
+    # Se crea la nueva transición
+    destinos_b = automata.get_transicion(1, 1)
+    assert destinos_b[0].nombres == ["ab"]
+
+def test_add_estado_transicion_sin_prefijo_historico():
+    automata = Automaton()
+    automata.add_estado(State("%", "INICIAL"))
+    resultado = automata.add_estado_transicion(
+        State("ab", "FINAL")
+    )
+    assert resultado is True
+    assert automata.obtener_numero_estados() == 2
+    assert automata.simbolos == ["a", "b"]
+    # Desde %, con 'a', llegamos a 'ab'.
+    destinos_a = automata.get_transicion(0, 0)
+    assert destinos_a[0].nombres == ["ab"]
+    # Desde %, con 'b', también llegamos a 'ab'.
+    destinos_b = automata.get_transicion(0, 1)
+    assert destinos_b[0].nombres == ["ab"]
+
+def test_guardar_automata_crea_fichero(tmp_path):
+    automata = Automaton()
+    fichero = tmp_path / "automata.txt"
+    automata.guardar_automata(False, str(fichero))
+    assert fichero.is_file()
+    contenido = fichero.read_text(encoding="utf-8")
+    assert contenido.startswith("Estados: \n\n")
+
+def test_guardar_automata_estados_normal(tmp_path):
+    automata = Automaton()
+    automata.add_estado(State(["q0"], "INICIAL"))
+    automata.add_estado(State(["q1"], "FINAL"))
+    fichero = tmp_path / "automata.txt"
+    automata.guardar_automata(False, str(fichero))
+    contenido = fichero.read_text(encoding="utf-8")
+    assert contenido.startswith(
+        "Estados: \n\n"
+        "[INICIAL] q0\n"
+        "[FINAL] q1\n\n"
+    )
+
+def test_guardar_automata_estados_compacto(tmp_path):
+    automata = Automaton()
+    automata.add_estado(State(["q0"], "INICIAL"))
+    automata.add_estado(State(["q1"], "FINAL"))
+    fichero = tmp_path / "compacto.txt"
+    automata.guardar_automata(True, str(fichero))
+    contenido = fichero.read_text(encoding="utf-8")
+    assert contenido.startswith(
+        "Estados: \n\n"
+        "0. [INICIAL] q0\n"
+        "1. [FINAL] q1\n\n"
+    )
+
+def test_guardar_automata_alfabeto(tmp_path):
+    automata = Automaton()
+    automata.add_simbolo("a")
+    automata.add_simbolo("b")
+    fichero = tmp_path / "alfabeto.txt"
+    automata.guardar_automata(False, str(fichero))
+    contenido = fichero.read_text(encoding="utf-8")
+    assert "Alfabeto: \n\na\nb\n\n" in contenido
+
+def test_guardar_automata_cabecera_matriz(tmp_path):
+    automata = Automaton()
+    automata.add_simbolo("a")
+    automata.add_simbolo("b")
+    fichero = tmp_path / "matriz.txt"
+    automata.guardar_automata(False, str(fichero))
+    contenido = fichero.read_text(encoding="utf-8")
+    assert "Matriz de transiciones: \n\nEstado a b \n" in contenido
+
+def test_guardar_automata_fila_estado_normal(tmp_path):
+    automata = Automaton()
+    automata.add_estado(State(["q0"], "INICIAL"))
+    automata.add_simbolo("a")
+    fichero = tmp_path / "matriz.txt"
+    automata.guardar_automata(False, str(fichero))
+    contenido = fichero.read_text(encoding="utf-8")
+    assert "Estado a \n{q0} " in contenido
+
+def test_guardar_automata_transicion_inexistente(tmp_path):
+    automata = Automaton()
+    automata.add_estado(State(["q0"], "INICIAL"))
+    automata.add_simbolo("a")
+    fichero = tmp_path / "sin_transiciones.txt"
+    automata.guardar_automata(False, str(fichero))
+    contenido = fichero.read_text(encoding="utf-8")
+    assert "Estado a \n{q0} - \n" in contenido
+
+def test_guardar_automata_transicion_existente(tmp_path):
+    automata = Automaton()
+    automata.add_estado(State(["q0"], "INICIAL"))
+    automata.add_estado(State(["q1"], "FINAL"))
+    automata.add_simbolo("a")
+    automata.add_transicion(0, 0, State(["q1"], "FINAL"))
+    fichero = tmp_path / "con_transiciones.txt"
+    automata.guardar_automata(False, str(fichero))
+    contenido = fichero.read_text(encoding="utf-8")
+    assert "Estado a \n{q0} {q1} \n{q1} - \n" in contenido
+
+def test_guardar_automata_transicion_multiple(tmp_path):
+    automata = Automaton()
+    automata.add_estado(State(["q0"], "INICIAL"))
+    automata.add_estado(State(["q1"], "FINAL"))
+    automata.add_estado(State(["q2"], "FINAL"))
+    automata.add_simbolo("a")
+    automata.add_transicion(0, 0, State(["q1"], "FINAL"))
+    automata.add_transicion(0, 0, State(["q2"], "FINAL"))
+    fichero = tmp_path / "afnd.txt"
+    automata.guardar_automata(False, str(fichero))
+    contenido = fichero.read_text(encoding="utf-8")
+    assert "{q0} {q1},{q2} \n" in contenido
+
+def test_guardar_automata_fila_compacta(tmp_path):
+    automata = Automaton()
+    automata.add_estado(State(["q0"], "INICIAL"))
+    automata.add_simbolo("a")
+    fichero = tmp_path / "compacto.txt"
+    automata.guardar_automata(True, str(fichero))
+    contenido = fichero.read_text(encoding="utf-8")
+    assert "Estado a \nq0 - \n" in contenido
+
+def test_guardar_automata_compacto_completo(tmp_path):
+    automata = Automaton()
+    automata.add_estado(State(["inicio"], "INICIAL"))
+    automata.add_estado(State(["fin"], "FINAL"))
+    automata.add_simbolo("a")
+    automata.add_transicion(0, 0, State(["fin"], "FINAL"))
+    fichero = tmp_path / "compacto.txt"
+    automata.guardar_automata(True, str(fichero))
+    contenido = fichero.read_text(encoding="utf-8")
+    assert "0. [INICIAL] inicio" in contenido
+    assert "1. [FINAL] fin" in contenido
+    assert "Estado a \nq0 q1 \nq1 - \n" in contenido

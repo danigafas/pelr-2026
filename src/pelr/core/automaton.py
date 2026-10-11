@@ -195,3 +195,82 @@ class Automaton:
                 tipo_resultante = primer_estado.tipo
             primer_estado.add_estado(nombre,tipo_resultante)
         self.del_estado(segundo_estado)
+
+    def get_alf_entrada(self) -> list[str]:
+        return self.alfabeto_entrada
+
+    def put_alf_entrada(self, entrada: list[str]) -> None:
+        self.alfabeto_entrada = entrada.copy()
+
+    def get_alf_salida(self) -> list[str] | None:
+        return self.alfabeto_salida
+
+    def get_f_salida(self) -> list | None:
+        return self.f_salida
+
+    def put_f_salida(self, funcion: list) -> None:
+        self.f_salida = funcion.copy()
+
+    # Corrección respecto a PELR 2007:
+    # putAlfSalida() contenía una conversión inválida de String[] a Vector.
+    def put_alf_salida(self, alfabeto: list[str]) -> None:
+        self.alfabeto_salida = alfabeto.copy()
+
+    def add_estado_transicion(self, estado: State) -> bool:
+        if self.add_estado(estado):
+            cadena = estado.get_estado(0)
+            estado_actual = State("%")
+            for simbolo_actual in cadena:
+                self.add_simbolo(simbolo_actual)
+                indice_estado = self.obtener_indice_estado(estado_actual)
+                indice_simbolo = self.simbolos.index(simbolo_actual)
+                try:
+                    destinos = self.get_transicion(indice_estado, indice_simbolo)
+                    estado_actual = destinos[0]
+                except Exception:
+                    self.add_transicion(
+                        self.buscar_estado(estado_actual),
+                        indice_simbolo,
+                        estado
+                    )
+            return True
+        return False
+
+    def guardar_automata(self, compacto: bool, nombre_fichero: str) -> None:
+        with open(nombre_fichero, "w", encoding="utf-8") as salida:
+            salida.write("Estados: \n\n")
+            for indice, estado in enumerate(self.v_estados):
+                tipo = estado.get_tipo_estado()
+                nombres = estado.get_nombre_estado()
+                nombre = ",".join(nombres)
+                if compacto:
+                    salida.write(f"{indice}. ")
+                salida.write(f"[{tipo}] {nombre}\n")
+            salida.write("\nAlfabeto: \n\n")
+            for simb in self.get_simbolos():
+                salida.write(f"{simb}\n")
+            salida.write("\nMatriz de transiciones: \n\nEstado ")
+            for simb in self.get_simbolos():
+                salida.write(f"{simb} ")
+            salida.write("\n")
+            for indice_estado, estado in enumerate(self.v_estados):
+                nombre = ",".join(estado.get_nombre_estado())
+                if compacto:
+                    salida.write(f"q{self.buscar_estado(estado)} ")
+                else:
+                    salida.write(f"{{{nombre}}} ")
+                for indice_simbolo in range(len(self.simbolos)):
+                    try:
+                        destinos = self.get_transicion(indice_estado, indice_simbolo)
+                        for i, destino in enumerate(destinos):
+                            if compacto:
+                                salida.write(f"q{self.buscar_estado(destino)}")
+                            else:
+                                n = ",".join(destino.get_nombre_estado())
+                                salida.write(f"{{{n}}}")
+                            if i < len(destinos) -1 :
+                                salida.write(",")
+                        salida.write(" ")
+                    except Exception:
+                        salida.write("- ")
+                salida.write("\n")
