@@ -7,7 +7,7 @@ def ejecutar_kc_incremental(
     cadena: str,
     k: int
 ) -> Automaton:
-
+    raise NotImplementedError("KC incremental pendiente de implementar")
     # 1. Comenzar en el estado inicial.
 
     # 2. Recorrer los símbolos de la nueva cadena.

@@ -1,6 +1,8 @@
 from pelr.algorithms.prefix_tree import generar_arbol_prefijos
 from pelr.algorithms.kc import ejecutar_kc
 from pelr.algorithms.kc_negative import comprueba_muestra_negativa, ejecutar_kc_con_negativos
+from pelr.core.automaton import Automaton
+from pelr.core.state import State
 
 def test_kc_acepta_muestra_negativa():
     arbol = generar_arbol_prefijos(["ab", "aab"])
@@ -39,3 +41,13 @@ def test_kc_negativos_sin_solucion():
     )
     assert valido is False
     assert k == 1
+
+def test_muestra_negativa_explora_todos_los_destinos():
+    automata = Automaton()
+    automata.put_simbolos(["a"])
+    automata.add_estado(State("%", "INICIAL"))
+    automata.add_estado(State("q1", "INTERMEDIO"))
+    automata.add_estado(State("q2", "FINAL"))
+    automata.add_transicion(0, 0, automata.obtener_estado(1))
+    automata.add_transicion(0, 0, automata.obtener_estado(2))
+    assert comprueba_muestra_negativa(automata, ["a"]) is True

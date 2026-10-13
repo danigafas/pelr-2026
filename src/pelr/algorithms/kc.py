@@ -34,9 +34,14 @@ def ejecutar_kc(arbol: Automaton, orden: int) -> Automaton:
                 temporal = arbol.obtener_estado(j)
                 if b.add_estado(State(temporal)):
                     anad[j] = True
-            if se_une(arbol.obtener_estado(i).get_estado(0), arbol.obtener_estado(j).get_estado(0), orden) and not cond[j]:
+            if se_une(
+                arbol.obtener_estado(i).get_estado(0),
+                arbol.obtener_estado(j).get_estado(0),
+                orden
+            ) and not cond[j]:
                 segundo = b.buscar_estado(arbol.obtener_estado(j))
-                b.une_estados(primero, segundo)
+                if primero != segundo:
+                    b.une_estados(primero, segundo)
                 cond[j] = True
 
     for i in range(arbol.obtener_numero_estados()):

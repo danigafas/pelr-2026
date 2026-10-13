@@ -123,7 +123,8 @@ def ejecutar_im1(
                 raise ValueError("Algoritmo IM1 desconocido")
             if fusionar and not cond[j]:
                 segundo = b.buscar_estado(automata.obtener_estado(j))
-                b.une_estados(primero, segundo)
+                if primero != segundo:
+                    b.une_estados(primero, segundo)
                 cond[j] = True
 
     # Reconstrucción de transiciones

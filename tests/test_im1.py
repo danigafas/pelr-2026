@@ -178,3 +178,13 @@ def test_miclet_ejecucion_completa():
         frozenset(["%", "a", "aa"]),
         frozenset(["ab", "ac", "aab"]),
     }
+
+def test_im1_evitar_autofusion():
+    arbol = generar_arbol_prefijos(["aaa", "aa", "a"])
+    resultado = ejecutar_im1(
+        arbol,
+        algoritmo=0,
+        orden=2,
+        umbral=0.0
+    )
+    assert resultado.obtener_numero_estados() > 0

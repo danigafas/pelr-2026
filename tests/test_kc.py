@@ -119,3 +119,8 @@ def test_kc_completo_k1():
     assert destinos(grupo_a, "c") == [frozenset(["ac"])]
     # KC no modifica el árbol original.
     assert arbol.obtener_numero_estados() == 6
+
+def test_kc_evitar_autofusion():
+    arbol = generar_arbol_prefijos(["aaa", "aa", "a"])
+    resultado = ejecutar_kc(arbol, 2)
+    assert resultado.obtener_numero_estados() > 0

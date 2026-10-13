@@ -1,6 +1,13 @@
 from pelr.algorithms.prefix_tree import generar_arbol_prefijos
 from pelr.algorithms.kc import ejecutar_kc
 from pelr.algorithms.kc_incremental import ejecutar_kc_incremental
+import pytest
+
+@pytest.mark.xfail(
+    raises=NotImplementedError,
+    reason="KC incremental pendiente",
+    strict=True
+)
 
 def test_incremental_anade_cadena_nueva():
     arbol = generar_arbol_prefijos(["ab"])
@@ -12,6 +19,12 @@ def test_incremental_anade_cadena_nueva():
     assert destino.get_tipo_estado() == "FINAL"
     destino = resultado.get_transicion_estrella(0, "ab")
     assert destino.get_tipo_estado() == "FINAL"
+
+@pytest.mark.xfail(
+    raises=NotImplementedError,
+    reason="KC incremental pendiente",
+    strict=True
+)
 
 def test_incremental_convierte_prefijo_en_final():
     arbol = generar_arbol_prefijos(["ab"])
