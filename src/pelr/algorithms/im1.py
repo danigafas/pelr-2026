@@ -2,40 +2,58 @@ from pelr.core.automaton import Automaton
 from pelr.core.state import State
 from sys import float_info
 
-def ts_pos(automata: Automaton, estado: State, orden: int) -> list[str]:
+CacheTs = dict[tuple[int, int], tuple[str, ...]]
+
+def ts_pos(
+    automata: Automaton,
+    estado: State,
+    orden: int,
+    cache: CacheTs | None = None
+) -> list[str]:
+
+    if cache is None:
+        cache = {}
+    clave = (id(estado), orden)
+    if clave in cache:
+        return list(cache[clave])
     resultado = []
     if orden == 0:
         if estado.get_tipo_estado() in ("FINAL", "INICIAL/FINAL"):
             resultado.append("%")
-        return resultado
-    i_estado = automata.obtener_indice_estado(estado)
-    if orden == 1:
-        for indice, simbolo in enumerate(automata.get_simbolos()):
-            try:
-                destinos = automata.get_transicion(i_estado, indice)
-                primero = destinos[0]
-            except Exception:
-                continue
-            if primero.get_tipo_estado() == "FINAL":
-                resultado.append(simbolo)
-        if estado.get_tipo_estado() in ("FINAL", "INICIAL/FINAL"):
-            resultado.append("%")
-    elif orden > 1:
-        for indice, simbolo in enumerate(automata.get_simbolos()):
-            try:
-                destinos = automata.get_transicion(i_estado, indice)
-                primero = destinos[0]
-            except Exception:
-                continue
-            continuaciones = ts_pos(automata, primero, orden - 1)
-            for continuacion in continuaciones:
-                if continuacion != "%":
-                    nueva = simbolo + continuacion
-                    resultado.append(nueva)
-        anteriores = ts_pos(automata, estado, orden - 1)
-        for continuacion in anteriores:
-            if continuacion not in resultado:
-                resultado.append(continuacion)
+    else:
+        i_estado = automata.obtener_indice_estado(estado)
+        if orden == 1:
+            for indice, simbolo in enumerate(automata.get_simbolos()):
+                try:
+                    destinos = automata.get_transicion(i_estado, indice)
+                    primero = destinos[0]
+                except Exception:
+                    continue
+                if primero.get_tipo_estado() == "FINAL":
+                    resultado.append(simbolo)
+            if estado.get_tipo_estado() in ("FINAL", "INICIAL/FINAL"):
+                resultado.append("%")
+        elif orden > 1:
+            for indice, simbolo in enumerate(automata.get_simbolos()):
+                try:
+                    destinos = automata.get_transicion(i_estado, indice)
+                    primero = destinos[0]
+                except Exception:
+                    continue
+                continuaciones = ts_pos(
+                    automata, primero, orden - 1, cache
+                )
+                for continuacion in continuaciones:
+                    if continuacion != "%":
+                        nueva = simbolo + continuacion
+                        resultado.append(nueva)
+            anteriores = ts_pos(
+                automata, estado, orden - 1, cache
+            )
+            for continuacion in anteriores:
+                if continuacion not in resultado:
+                    resultado.append(continuacion)
+    cache[clave] = tuple(resultado)
     return resultado
 
 def calcular_ts(automata: Automaton, orden: int) -> list[list[str]]:
@@ -66,9 +84,12 @@ def con_levine(
     automata: Automaton,
     u: int,
     v: int,
-    s: float
+    s: float,
+    cache: CacheTs | None = None
 ) -> bool:
     """Compara dos estados mediante el criterio Levine de PELR 2007."""
+    if cache is None:
+        cache = {}
     similitud_maxima = -1.0
     longitud_maxima = 0
     for estado in automata.get_vector_estados():
@@ -78,8 +99,8 @@ def con_levine(
     estado_u = automata.obtener_estado(u)
     estado_v = automata.obtener_estado(v)
     for orden in range(longitud_maxima + 1):
-        aux1 = ts_pos(automata, estado_u, orden)
-        aux2 = ts_pos(automata, estado_v, orden)
+        aux1 = ts_pos(automata, estado_u, orden, cache)
+        aux2 = ts_pos(automata, estado_v, orden, cache)
         comunes = interseccion(aux1, aux2)
         denominador = len(aux1)+len(aux2)
         if denominador!= 0:
@@ -105,7 +126,7 @@ def ejecutar_im1(
     cond = [False] * cantidad
     anad = [False] * cantidad
     b.add_estado(State(automata.obtener_estado(0)))
-
+    cache_ts = {} if algoritmo in (1, 2) else None
     for i in range(cantidad):
         primero = b.buscar_estado(automata.obtener_estado(i))
         for j in range(i, cantidad):
@@ -118,7 +139,7 @@ def ejecutar_im1(
             if algoritmo == 0:
                 fusionar = con_k_sufijos(vec_tes, i, j)
             elif algoritmo in (1, 2):
-                fusionar = con_levine(automata, i, j, umbral)
+                fusionar = con_levine(automata, i, j, umbral, cache_ts)
             else:
                 raise ValueError("Algoritmo IM1 desconocido")
             if fusionar and not cond[j]:
@@ -154,6 +175,7 @@ def ejecutar_im1(
 
 def calcular_umbral_miclet(automata: Automaton) -> float:
     """Calcula el umbral automático de Miclet según generaS() de PELR 2007."""
+    cache: CacheTs = {}
     estados = automata.get_vector_estados()
 
     umbral = float_info.max
@@ -166,8 +188,8 @@ def calcular_umbral_miclet(automata: Automaton) -> float:
         for j in range(i + 1, len(estados)):
             similitud_maxima = -1.0
             for orden in range(longitud_maxima + 1):
-                t1 = ts_pos(automata, estados[i], orden)
-                t2 = ts_pos(automata, estados[j], orden)
+                t1 = ts_pos(automata, estados[i], orden, cache)
+                t2 = ts_pos(automata, estados[j], orden, cache)
                 comunes = interseccion(t1, t2)
                 denominador = len(t1) + len(t2)
                 if denominador != 0:
