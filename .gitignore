@@ -29,3 +29,4 @@ dist/
 
 # Netbeans private files
 legacy/pelr-2007/PELR/nbproject/private/
+benchmarks/results/
