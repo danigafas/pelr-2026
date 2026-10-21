@@ -85,17 +85,26 @@ def con_levine(
     u: int,
     v: int,
     s: float,
-    cache: CacheTs | None = None
+    cache: CacheTs | None = None,
+    longitud_maxima: int | None = None
 ) -> bool:
     """Compara dos estados mediante el criterio Levine de PELR 2007."""
     if cache is None:
         cache = {}
     similitud_maxima = -1.0
-    longitud_maxima = 0
+    """longitud_maxima = 0
     for estado in automata.get_vector_estados():
         longitud = len(estado.get_estado(0))
         if longitud > longitud_maxima:
-            longitud_maxima = longitud
+            longitud_maxima = longitud"""
+    if longitud_maxima is None:
+        longitud_maxima = max(
+            (
+                len(estado.get_estado(0))
+                for estado in automata.get_vector_estados()
+            ),
+            default=0
+        )
     estado_u = automata.obtener_estado(u)
     estado_v = automata.obtener_estado(v)
     for orden in range(longitud_maxima + 1):
@@ -127,6 +136,15 @@ def ejecutar_im1(
     anad = [False] * cantidad
     b.add_estado(State(automata.obtener_estado(0)))
     cache_ts = {} if algoritmo in (1, 2) else None
+    longitud_maxima = None
+    if algoritmo in (1, 2):
+        longitud_maxima = max(
+            (
+                len(estado.get_estado(0))
+                for estado in automata.get_vector_estados()
+            ),
+        default=0
+    )
     for i in range(cantidad):
         primero = b.buscar_estado(automata.obtener_estado(i))
         for j in range(i, cantidad):
@@ -139,7 +157,14 @@ def ejecutar_im1(
             if algoritmo == 0:
                 fusionar = con_k_sufijos(vec_tes, i, j)
             elif algoritmo in (1, 2):
-                fusionar = con_levine(automata, i, j, umbral, cache_ts)
+                fusionar = con_levine(
+                    automata,
+                    i,
+                    j,
+                    umbral,
+                    cache_ts,
+                    longitud_maxima
+                )
             else:
                 raise ValueError("Algoritmo IM1 desconocido")
             if fusionar and not cond[j]:
